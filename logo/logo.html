@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#202039" />
+    <title>ASF — ALOUS FRANCE</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    />
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        min-width: 320px;
+        min-height: 100vh;
+        margin: 0;
+        display: grid;
+        place-items: center;
+        background: #202039;
+        color: #fff;
+        font-family: "DM Sans", Arial, sans-serif;
+      }
+
+      .brand {
+        display: grid;
+        justify-items: center;
+        gap: 28px;
+        text-align: center;
+      }
+
+      .brand-mark {
+        width: 192px;
+        height: 192px;
+        display: grid;
+        place-items: center;
+        border-radius: 52px;
+        background: linear-gradient(145deg, #8e87ff, #6159df);
+        box-shadow: 0 24px 56px #5148ce55;
+        font-size: 92px;
+      }
+
+      .brand-name {
+        font-family: Manrope, "DM Sans", Arial, sans-serif;
+        font-size: clamp(48px, 9vw, 76px);
+        font-weight: 800;
+        letter-spacing: 0.025em;
+        line-height: 1;
+      }
+
+      .brand-caption {
+        display: block;
+        margin-top: 12px;
+        color: #aaa8c2;
+        font-size: 14px;
+        font-weight: 600;
+        letter-spacing: 0.28em;
+      }
+
+      @media (max-width: 480px) {
+        .brand-mark {
+          width: 152px;
+          height: 152px;
+          border-radius: 42px;
+          font-size: 72px;
+        }
+      }
+    </style>
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap"
+    />
+  </head>
+  <body>
+    <main class="brand" aria-label="ASF ALOUS FRANCE">
+      <span class="brand-mark" aria-hidden="true">
+        <i class="fa-solid fa-chart-pie"></i>
+      </span>
+      <div class="brand-name">
+        ASF
+        <span class="brand-caption">ALOUS FRANCE</span>
+      </div>
+    </main>
+  </body>
+</html>

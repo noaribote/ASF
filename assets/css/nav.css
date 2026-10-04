@@ -1,0 +1,25 @@
+nav {
+    position: absolute;
+    left: 0; top: 0;
+    width: 250px; height: 100%;
+    background: #1f1b3b;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+nav a {
+    padding: 10px;
+    background: #312b5d;
+    border-radius: 12px;
+    margin: 5px;
+    width: calc(90% - 20px);
+    position: relative;
+    justify-content: top;
+    text-decoration: none;
+    color: white;
+    transition: 0.1s ease-in-out;
+}
+
+nav a:hover {
+    cursor: pointer;
+    background: #3d3770;
+}

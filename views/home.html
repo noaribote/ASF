@@ -1,0 +1,407 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f4f5f8" />
+    <title>ASF — Suivi des finances</title>
+    <link rel="stylesheet" href="../assets/css/style.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  </head>
+  <body>
+    <aside class="sidebar" id="sidebar">
+      <a
+        class="brand"
+        id="brandHome"
+        href="#dashboard"
+        aria-label="Ouvrir la vue générale"
+        ><span class="brand-mark"><i class="fa-solid fa-chart-pie"></i></span
+        ><span>ASF<span class="brand-caption">ALOUS FRANCE</span></span></a
+      >
+      <div class="side-label">ESPACE</div>
+      <button class="side-link active" id="generalHome" data-view="dashboard">
+        <i class="fa-solid fa-house"></i><span>Vue générale</span>
+      </button>
+      <div class="section-heading">
+        <span>MES ESPACES</span
+        ><button
+          class="icon-button side-add"
+          id="createModelShortcut"
+          title="Nouvel espace"
+        >
+          <i class="fa-solid fa-plus"></i>
+        </button>
+      </div>
+      <div id="modelList" class="model-list" aria-label="Mes espaces"></div>
+      <div class="sidebar-bottom">
+        <div class="side-label">PRÉFÉRENCES</div>
+        <button class="side-link" data-view="settings">
+          <i class="fa-solid fa-sliders"></i><span>Paramètres</span>
+        </button>
+        <div class="profile-chip">
+          <span class="avatar">A</span
+          ><span><strong>Mon espace</strong><small>Données locales</small></span
+          ><button
+            class="icon-button profile-menu-button"
+            id="profileMenuButton"
+            title="Options de l’espace"
+            aria-label="Options de l’espace"
+          >
+            <i class="fa-solid fa-ellipsis"></i>
+          </button>
+          <div class="profile-menu" id="profileMenu" hidden>
+            <button type="button" id="openModelsFolder">
+              <i class="fa-regular fa-folder-open"></i> Accéder au dossier</button
+            ><button type="button" id="openArchiveFolder">
+              <i class="fa-solid fa-box-archive"></i> Ouvrir les archives
+            </button>
+          </div>
+        </div>
+      </div>
+    </aside>
+    <main class="main-shell">
+      <header class="topbar">
+        <button
+          id="mobileMenu"
+          class="icon-button mobile-menu"
+          aria-label="Ouvrir le menu"
+        >
+          <i class="fa-solid fa-bars"></i>
+        </button>
+        <div class="breadcrumb">
+          <span>ASF</span><i class="fa-solid fa-chevron-right"></i
+          ><strong id="breadcrumbTitle">Vue générale</strong>
+        </div>
+        <div class="top-actions">
+          <span class="saved-indicator"
+            ><span></span> Sauvegarde automatique</span
+          ><button id="themeQuick" class="icon-button" title="Changer de thème">
+            <i class="fa-regular fa-moon"></i></button
+          ><button class="avatar avatar-top" title="Profil">A</button>
+        </div>
+      </header>
+      <section id="dashboardView" class="view active-view">
+        <div class="page-heading">
+          <div>
+            <div class="eyebrow" id="viewEyebrow">
+              VOTRE PATRIMOINE, EN UN COUP D’ŒIL
+            </div>
+            <h1 id="pageTitle">Vue générale</h1>
+            <p id="pageSubtitle">
+              Retrouvez l’essentiel de vos finances au même endroit.
+            </p>
+          </div>
+          <div class="heading-actions">
+            <button id="filterToggle" class="button button-quiet">
+              <i class="fa-solid fa-bars-staggered"></i
+              ><span>Filtrer</span></button
+            ><button id="addItemTop" class="button button-primary">
+              <i class="fa-solid fa-plus"></i><span>Ajouter un espace</span>
+            </button>
+          </div>
+        </div>
+        <div id="filterPanel" class="filter-panel" hidden>
+          <span>Afficher les courbes</span
+          ><label
+            ><input type="checkbox" data-series="revenus" checked /><i
+              class="legend-dot income-dot"
+            ></i>
+            Revenus</label
+          ><label
+            ><input type="checkbox" data-series="depenses" checked /><i
+              class="legend-dot expense-dot"
+            ></i>
+            Achats</label
+          ><label
+            ><input type="checkbox" data-series="solde" checked /><i
+              class="legend-dot balance-dot"
+            ></i>
+            Solde cumulé</label
+          ><label
+            ><input type="checkbox" data-series="items" checked /><i
+              class="legend-dot product-dot"
+            ></i>
+            Produits marketplace</label
+          >
+        </div>
+        <div id="statsGrid" class="stats-grid"></div>
+        <div class="dashboard-grid">
+          <section class="card chart-card">
+            <div class="card-heading">
+              <div>
+                <span class="eyebrow">ÉVOLUTION</span>
+                <h2>Activité financière</h2>
+              </div>
+              <span id="chartRange" class="range-pill">12 derniers mois</span>
+            </div>
+            <div class="chart-wrap">
+              <canvas
+                id="budgetChart"
+                aria-label="Graphique des revenus, dépenses et du solde"
+              ></canvas>
+            </div>
+          </section>
+          <section class="card history-card">
+            <div class="card-heading">
+              <div>
+                <span class="eyebrow">DERNIÈRES OPÉRATIONS</span>
+                <h2>Historique récent</h2>
+              </div>
+              <button
+                class="icon-button"
+                id="addItemHistory"
+                title="Ajouter une opération"
+              >
+                <i class="fa-solid fa-plus"></i>
+              </button>
+            </div>
+            <div id="historyList" class="history-list"></div>
+            <button class="text-button" id="showAllItems">
+              Voir toutes les opérations <i class="fa-solid fa-arrow-right"></i>
+            </button>
+          </section>
+          <section class="card items-card">
+            <div class="card-heading">
+              <div>
+                <span class="eyebrow">VOTRE ACTIVITÉ</span>
+                <h2 id="itemsTitle">Activité récente</h2>
+              </div>
+              <button class="text-button" id="addItemInline">
+                <i class="fa-solid fa-plus"></i> Ajouter
+              </button>
+            </div>
+            <div id="itemsList" class="items-list"></div>
+          </section>
+          <section class="card insight-card">
+            <div class="insight-icon">
+              <i class="fa-solid fa-wand-magic-sparkles"></i>
+            </div>
+            <div>
+              <span class="eyebrow">À RETENIR</span>
+              <h2 id="insightTitle">Vos données sont prêtes</h2>
+              <p id="insightText">
+                Ajoutez quelques opérations pour voir apparaître les tendances
+                de votre activité.
+              </p>
+            </div>
+            <button id="marketSummaryButton" class="button button-quiet" hidden>
+              Résumé du solde
+            </button>
+          </section>
+        </div>
+        <footer class="view-footer">
+          <button id="deleteModelButton" class="button button-danger" hidden>
+            <i class="fa-regular fa-trash-can"></i> Supprimer un espace
+          </button>
+        </footer>
+      </section>
+      <section id="settingsView" class="view settings-view">
+        <div class="page-heading">
+          <div>
+            <div class="eyebrow">PERSONNALISEZ VOTRE ESPACE</div>
+            <h1>Paramètres</h1>
+            <p>Choisissez l’apparence qui vous convient.</p>
+          </div>
+        </div>
+        <section class="card settings-card">
+          <div class="settings-intro">
+            <span class="settings-icon"
+              ><i class="fa-solid fa-palette"></i
+            ></span>
+            <div>
+              <h2>Apparence</h2>
+              <p>
+                Le thème est appliqué immédiatement et conservé sur cet
+                appareil.
+              </p>
+            </div>
+          </div>
+          <div class="theme-options">
+            <button class="theme-option" data-theme="light">
+              <span class="theme-preview preview-light"
+                ><i></i><i></i><i></i></span
+              ><span
+                ><strong>Clair</strong
+                ><small>Une interface lumineuse</small></span
+              ><i class="fa-regular fa-circle-check option-check"></i></button
+            ><button class="theme-option" data-theme="dark">
+              <span class="theme-preview preview-dark"
+                ><i></i><i></i><i></i></span
+              ><span
+                ><strong>Sombre</strong
+                ><small>Confortable en faible lumière</small></span
+              ><i class="fa-regular fa-circle-check option-check"></i></button
+            ><button class="theme-option" data-theme="vintage">
+              <span class="theme-preview preview-vintage"
+                ><i></i><i></i><i></i></span
+              ><span
+                ><strong>Tableau à craie</strong
+                ><small>Un style rétro, aux tons bruns</small></span
+              ><i class="fa-regular fa-circle-check option-check"></i>
+            </button>
+          </div>
+        </section>
+        <section class="card data-card">
+          <span class="settings-icon"
+            ><i class="fa-solid fa-hard-drive"></i
+          ></span>
+          <div>
+            <h2>Vos données</h2>
+            <p>
+              Les modifications sont sauvegardées dans les fichiers JSON de vos
+              espaces. Vos préférences d’affichage restent sur cet appareil.
+            </p>
+            <div id="settingsDataStatus" class="data-status"></div>
+          </div>
+        </section>
+      </section>
+    </main>
+    <div class="toast" id="toast" role="status"></div>
+    <dialog id="allEntriesDialog" class="modal all-entries-modal">
+      <div class="modal-form">
+        <div class="modal-heading">
+          <div>
+            <span class="eyebrow">VOTRE ESPACE</span>
+            <h2 id="allEntriesTitle">Toutes les opérations</h2>
+          </div>
+          <button
+            type="button"
+            class="icon-button close-dialog"
+            aria-label="Fermer"
+          >
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+        <div id="allEntriesList" class="all-entries-list"></div>
+      </div>
+    </dialog>
+    <dialog id="marketSummaryDialog" class="modal market-summary-modal">
+      <div class="modal-form">
+        <div class="modal-heading">
+          <div>
+            <span class="eyebrow">VUE COMPTABLE</span>
+            <h2>Résumé du solde marketplace</h2>
+          </div>
+          <button
+            type="button"
+            class="icon-button close-dialog"
+            aria-label="Fermer"
+          >
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+        <div id="marketSummaryRows" class="market-summary-rows"></div>
+      </div>
+    </dialog>
+    <dialog id="modelDialog" class="modal">
+      <form id="modelForm" class="modal-form">
+        <div class="modal-heading">
+          <div>
+            <span class="eyebrow">NOUVEL ESPACE</span>
+            <h2>Créer un espace</h2>
+          </div>
+          <button
+            type="button"
+            class="icon-button close-dialog"
+            aria-label="Fermer"
+          >
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+        <label
+          >Nom de l’espace<input
+            name="name"
+            required
+            maxlength="48"
+            placeholder="Ex. Voyage au Japon" /></label
+        ><label
+          >Description <span class="optional">(facultatif)</span
+          ><input
+            name="description"
+            maxlength="100"
+            placeholder="Quelques mots sur cet espace" /></label
+        ><label class="toggle-row"
+          ><span
+            ><strong>Mode marketplace</strong
+            ><small>Suivre des produits, ventes et estimations</small></span
+          ><input name="marketplace" type="checkbox"
+        /></label>
+        <div class="modal-actions">
+          <button type="button" class="button button-quiet close-dialog">
+            Annuler</button
+          ><button class="button button-primary" type="submit">
+            Créer l’espace
+          </button>
+        </div>
+      </form>
+    </dialog>
+    <dialog id="itemDialog" class="modal">
+      <form id="itemForm" class="modal-form">
+        <div class="modal-heading">
+          <div>
+            <span class="eyebrow" id="itemDialogEyebrow"
+              >NOUVELLE OPÉRATION</span
+            >
+            <h2 id="itemDialogTitle">Ajouter une opération</h2>
+          </div>
+          <button
+            type="button"
+            class="icon-button close-dialog"
+            aria-label="Fermer"
+          >
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+        <label
+          >Nom<input
+            name="nom"
+            required
+            maxlength="80"
+            placeholder="Ex. Achat de matériel"
+        /></label>
+        <div class="form-row">
+          <label>Type<select name="type" id="itemType" required></select></label
+          ><label
+            >Montant (€)<input
+              name="montant"
+              type="number"
+              min="0.01"
+              step="0.01"
+              required
+              placeholder="0,00"
+          /></label>
+        </div>
+        <label id="quantityField" hidden
+          >Quantité <span class="optional">(facultatif, 1 par défaut)</span
+          ><input
+            name="quantite"
+            type="number"
+            min="1"
+            step="1"
+            placeholder="1"
+        /></label>
+        <div class="form-row">
+          <label>Date<input name="date" type="date" required /></label
+          ><label id="stateField" class="toggle-row state-toggle"
+            ><span
+              ><strong>Vendu / épuisé</strong
+              ><small>Marquer comme vendu</small></span
+            ><input name="etat" type="checkbox"
+          /></label>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="button button-quiet close-dialog">
+            Annuler</button
+          ><button class="button button-primary" type="submit">
+            Enregistrer
+          </button>
+        </div>
+      </form>
+    </dialog>
+    <script src="../assets/js/app.js"></script>
+  </body>
+</html>
