@@ -1,8 +1,16 @@
 const { app, BrowserWindow, Menu, ipcMain, shell } = require('electron');
 const path = require('path');
 const fs = require('fs/promises');
+const fsConstants = require('fs').constants;
 let mainWindow;
 const modelDirectory = path.join(__dirname, 'model');
+const archiveDirectory = path.join(modelDirectory, 'archive');
+async function ensureModelDirectories() {
+  await Promise.all([
+    fs.mkdir(modelDirectory, { recursive: true }),
+    fs.mkdir(archiveDirectory, { recursive: true }),
+  ]);
+}
 function safeModelPath(fileName) {
   if (typeof fileName !== 'string' || !/^[\w\p{L}-]+\.json$/iu.test(fileName)) {
     throw new Error('Nom de fichier JSON invalide.');
@@ -30,28 +38,28 @@ function createWindow() {
   // mainWindow.webContents.openDevTools();
 }
 ipcMain.handle('models:list', async () => {
+  await ensureModelDirectories();
   const entries = await fs.readdir(modelDirectory, { withFileTypes: true });
   return entries.filter(entry => entry.isFile() && entry.name.toLowerCase().endsWith('.json')).map(entry => entry.name).sort((a, b) => a.localeCompare(b, 'fr'));
 });
 ipcMain.handle('models:open-folder', async () => {
+  await ensureModelDirectories();
   const error = await shell.openPath(modelDirectory);
   if (error) throw new Error(error);
   return true;
 });
 ipcMain.handle('models:open-archive', async () => {
-  const archiveDirectory = path.join(modelDirectory, 'archive');
-  await fs.mkdir(archiveDirectory, { recursive: true });
+  await ensureModelDirectories();
   const error = await shell.openPath(archiveDirectory);
   if (error) throw new Error(error);
   return true;
 });
 ipcMain.handle('models:delete-archive', async (event, fileName) => {
+  await ensureModelDirectories();
   const sourcePath = safeModelPath(fileName);
-  const archiveDirectory = path.join(modelDirectory, 'archive');
-  await fs.mkdir(archiveDirectory, { recursive: true });
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
   const archiveName = `${path.basename(fileName, '.json')}-${timestamp}.json`;
-  await fs.copyFile(sourcePath, path.join(archiveDirectory, archiveName), require('fs').constants.COPYFILE_EXCL);
+  await fs.copyFile(sourcePath, path.join(archiveDirectory, archiveName), fsConstants.COPYFILE_EXCL);
   await fs.unlink(sourcePath);
   return archiveName;
 });
@@ -76,7 +84,10 @@ ipcMain.on('open-external-link', (event, url) => {
   shell.openExternal(url);
 });
 app.whenReady().then(() => {
-  createWindow();
+  ensureModelDirectories().then(createWindow).catch(error => {
+    console.error('Impossible de créer les dossiers model :', error);
+    app.quit();
+  });
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
       createWindow();

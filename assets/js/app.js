@@ -1110,6 +1110,7 @@ function render() {
   if (state.view === "settings") {
     $("#marketSummaryButton").hidden = true;
     $("#deleteModelButton").hidden = true;
+    $("#editModelButton").hidden = true;
     return;
   }
 
@@ -1120,6 +1121,9 @@ function render() {
 
   deleteButton.hidden = general;
   deleteButton.style.display = general ? "none" : "";
+  const editButton = $("#editModelButton");
+  editButton.hidden = general;
+  editButton.style.display = general ? "none" : "";
   summaryButton.hidden = !model?.marketplace || general;
   summaryButton.style.display = !general && model?.marketplace ? "" : "none";
 
@@ -1247,6 +1251,37 @@ function setView(view) {
 function openModelDialog() {
   $("#modelForm").reset();
   $("#modelDialog").showModal();
+}
+
+function openEditModelDialog() {
+  const model = activeModel();
+  if (!model) return;
+  const form = $("#editModelForm");
+  form.elements.name.value = model.name;
+  form.elements.description.value = model.description || "";
+  $("#editModelDialog").showModal();
+}
+
+async function updateModel(event) {
+  event.preventDefault();
+  const model = activeModel();
+  if (!model) return;
+  const formData = new FormData(event.currentTarget);
+  const name = String(formData.get("name") || "").trim();
+  if (!name) return;
+  const updated = {
+    ...model,
+    name,
+    description: String(formData.get("description") || "").trim(),
+  };
+  try {
+    await persistModel(updated);
+    state.models = state.models
+      .map((entry) => entry.file === model.file ? updated : entry)
+      .sort((a, b) => a.name.localeCompare(b.name, "fr"));
+    $("#editModelDialog").close();
+    render();
+  } catch {}
 }
 
 function openItemDialog(kind = null, item = null, index = null) {
@@ -1452,7 +1487,7 @@ async function removeItem(data) {
 
 async function deleteActiveModel() {
   const model = activeModel();
-  if (!model || !window.confirm(`Supprimer « ${model.name} » ? Une copie sera conservée dans model/archive/.`)) return;
+  if (!model || !window.confirm(`Supprimer « ${model.name} » ? Une copie sera conservée dans vos archives.`)) return;
   const api = getApi();
   if (!api?.deleteAndArchiveModel) {
     showToast("La suppression est disponible dans l’application Electron.");
@@ -1488,6 +1523,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   $(".empty-create")?.addEventListener("click", openModelDialog);
   $("#modelForm").addEventListener("submit", addModel);
+  $("#editModelForm").addEventListener("submit", updateModel);
   $("#itemForm").addEventListener("submit", saveItem);
   $$(".close-dialog").forEach((button) =>
     button.addEventListener("click", () => button.closest("dialog").close()),
@@ -1510,6 +1546,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   $("#showAllItems").addEventListener("click", openAllEntries);
   $("#marketSummaryButton").addEventListener("click", openMarketSummary);
   $("#deleteModelButton").addEventListener("click", deleteActiveModel);
+  $("#editModelButton").addEventListener("click", openEditModelDialog);
   $("#filterToggle").addEventListener("click", () => {
     const panel = $("#filterPanel");
     panel.hidden = !panel.hidden;

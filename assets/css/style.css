@@ -192,6 +192,10 @@ button {
   box-shadow: 0 5px 12px #14122955;
 }
 
+:root[data-theme="vintage"] .side-link.active {
+  background: linear-gradient(110deg, #a37a4e, #775432);
+}
+
 .section-heading {
   display: flex;
   align-items: center;
@@ -470,6 +474,10 @@ button {
   background: var(--primary);
   color: #fff;
   box-shadow: 0 5px 12px color-mix(in srgb, var(--primary) 22%, transparent);
+}
+
+:root[data-theme="vintage"] .button-primary {
+  color: #fffaf1;
 }
 
 .button-primary:hover {
@@ -789,6 +797,10 @@ button {
 
 .history-card > .text-button {
   margin-top: 8px;
+  flex: none;
+  align-self: flex-start;
+  min-height: 32px;
+  padding: 7px 0;
 }
 
 .items-card {
@@ -1700,6 +1712,8 @@ button {
 .view-footer {
   display: flex;
   justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
   flex: none;
   min-height: 35px;
   margin-top: 8px;
@@ -1711,9 +1725,14 @@ button {
   padding: 0 12px;
 }
 
+.view-footer .button {
+  min-height: 35px;
+  font-size: 10px;
+}
+
 .main-shell {
   height: 100vh;
-  min-height: 600px;
+  min-height: 0;
   overflow: hidden;
 }
 
@@ -1724,6 +1743,10 @@ button {
 .view.active-view {
   height: calc(100vh - 68px);
   overflow: hidden;
+}
+
+.dashboard-grid > .card {
+  min-width: 0;
 }
 
 .page-heading {
@@ -1744,16 +1767,21 @@ button {
   min-height: 0;
   height: 100%;
   padding: 15px 17px 10px;
+  display: flex;
+  flex-direction: column;
 }
 
 .chart-wrap {
   height: calc(100% - 54px);
-  min-height: 125px;
+  min-height: 0;
   margin-top: 9px;
 }
 
 .history-list {
   margin-top: 8px;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .history-row {
@@ -1766,6 +1794,8 @@ button {
 }
 
 .items-list {
+  flex: 1;
+  min-height: 0;
   overflow: hidden;
 }
 
@@ -1814,11 +1844,6 @@ button {
     gap: 19px;
   }
 
-  .chart-card,
-  .history-card {
-    min-height: 350px;
-  }
-
   .chart-wrap {
     height: 270px;
   }
@@ -1847,7 +1872,7 @@ button {
   }
 
   .dashboard-grid {
-    grid-template-columns: minmax(0, 1.3fr) minmax(260px, 1fr);
+    grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
   }
 
   .items-list {
@@ -1876,6 +1901,23 @@ button {
 
   .main-shell {
     margin-left: 0;
+    height: 100dvh;
+  }
+
+  .view.active-view {
+    height: calc(100dvh - 59px);
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior-y: contain;
+  }
+
+  #dashboardView.active-view > .dashboard-grid {
+    flex: none;
+    min-height: 0;
+  }
+
+  #dashboardView.active-view {
+    display: block;
   }
 
   .mobile-menu {
@@ -1921,7 +1963,10 @@ button {
   }
 
   .dashboard-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto;
+    align-content: start;
+    flex: none;
   }
 
   .chart-card {
@@ -1930,10 +1975,18 @@ button {
 
   .chart-wrap {
     height: 218px;
+    min-height: 180px;
   }
 
   .history-card {
     min-height: 260px;
+    height: 300px;
+  }
+
+  .history-list {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
   }
 
   .items-list {
@@ -2039,5 +2092,66 @@ button {
 
   .filter-panel {
     gap: 10px 13px;
+  }
+}
+
+@media (max-height: 720px) and (min-width: 801px) {
+  #dashboardView.active-view {
+    display: block;
+    overflow-y: auto;
+  }
+
+  .view.active-view > .dashboard-grid {
+    flex: none;
+  }
+
+  .dashboard-grid {
+    grid-template-rows: auto auto;
+  }
+
+  .dashboard-grid > .card {
+    height: auto;
+  }
+
+  .chart-card {
+    min-height: 290px;
+  }
+
+  .history-card {
+    min-height: 260px;
+  }
+
+  .items-card,
+  .insight-card {
+    min-height: 180px;
+  }
+}
+
+@media (max-width: 800px) and (max-height: 700px) {
+  #dashboardView.active-view {
+    display: block;
+    overflow-y: auto;
+  }
+
+  #dashboardView.active-view > .dashboard-grid {
+    flex: none;
+    grid-template-rows: auto;
+  }
+
+  #dashboardView .dashboard-grid > .card {
+    height: auto;
+  }
+
+  #dashboardView .chart-card {
+    min-height: 270px;
+  }
+
+  #dashboardView .history-card {
+    min-height: 240px;
+  }
+
+  #dashboardView .items-card,
+  #dashboardView .insight-card {
+    min-height: 150px;
   }
 }

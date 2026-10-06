@@ -194,6 +194,9 @@
           </section>
         </div>
         <footer class="view-footer">
+          <button id="editModelButton" class="button button-quiet" hidden>
+            <i class="fa-regular fa-pen-to-square"></i> Modifier un espace
+          </button>
           <button id="deleteModelButton" class="button button-danger" hidden>
             <i class="fa-regular fa-trash-can"></i> Supprimer un espace
           </button>
@@ -336,6 +339,25 @@
           ><button class="button button-primary" type="submit">
             Créer l’espace
           </button>
+        </div>
+      </form>
+    </dialog>
+    <dialog id="editModelDialog" class="modal">
+      <form id="editModelForm" class="modal-form">
+        <div class="modal-heading">
+          <div>
+            <span class="eyebrow">PARAMÈTRES DE L’ESPACE</span>
+            <h2>Modifier un espace</h2>
+          </div>
+          <button type="button" class="icon-button close-dialog" aria-label="Fermer">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+        <label>Nom de l’espace<input name="name" required maxlength="48" /></label>
+        <label>Description <span class="optional">(facultatif)</span><input name="description" maxlength="100" placeholder="Quelques mots sur cet espace" /></label>
+        <div class="modal-actions">
+          <button type="button" class="button button-quiet close-dialog">Annuler</button>
+          <button class="button button-primary" type="submit">Enregistrer</button>
         </div>
       </form>
     </dialog>
