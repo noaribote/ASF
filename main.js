@@ -16,7 +16,7 @@ function createWindow() {
     width: 1420,
     height: 900,
     minWidth: 760,
-    minHeight: 600,
+    minHeight: 900,
     fullscreen: false,
     resizable: true,
     webPreferences: {
