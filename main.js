@@ -35,6 +35,7 @@ function createWindow() {
   Menu.setApplicationMenu(null);
   mainWindow.setIcon(path.join(__dirname, 'assets/images/logo.ico'));
   mainWindow.loadFile('views/home.html');
+  // Ouvrir automatiquement le devTool lors du `npm start`
   // mainWindow.webContents.openDevTools();
 }
 ipcMain.handle('models:list', async () => {

@@ -88,7 +88,6 @@ function showToast(message) {
 function closeDialog(dialog) {
   if (!dialog) return;
   if (dialog.open) dialog.close();
-  // Electron can retain the modal focus trap after a dialog is dismissed.
   document.activeElement?.blur?.();
   document.body.focus?.();
 }
@@ -641,7 +640,6 @@ function makeChart(model) {
   const profits = sumByDay("revenus").map(
     (amount, index) => amount + soldProducts[index],
   );
-  // const balances = cumulativeBalances(profits, expenses, entries);
   const balances = cumulativeBalances(profits, expenses);
   const products = timeSeries.keys.map((key) =>
     entries
@@ -666,7 +664,6 @@ function makeChart(model) {
     timeSeries.labels,
     makeDatasets({
       profits,
-      // expenses,
       expenses: expenses.map((value) => -value),
       balances,
       products,
@@ -727,7 +724,6 @@ function makeGeneralChart() {
   const profits = sumByDay("revenus").map(
     (amount, index) => amount + soldProducts[index],
   );
-  // const balances = cumulativeBalances(profits, expenses, entries);
   const balances = cumulativeBalances(profits, expenses);
   const products = timeSeries.keys.map((key) =>
     entries
@@ -753,7 +749,6 @@ function makeGeneralChart() {
     timeSeries.labels,
     makeDatasets({
       profits,
-      // expenses,
       expenses: expenses.map((value) => -value),
       balances,
       products,
@@ -769,38 +764,6 @@ function makeGeneralChart() {
   );
 }
 
-// function buildTimeSeries(entries) {
-//   const dates = entries
-//     .map((item) => String(item.date || "").slice(0, 10))
-//     .filter((date) => /^\d{4}-\d{2}-\d{2}$/.test(date))
-//     .sort();
-//   const today = new Date();
-//   const end = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-//   const todayKey = [end.getFullYear(), String(end.getMonth() + 1).padStart(2, "0"), String(end.getDate()).padStart(2, "0")].join("-");
-//   const earliestDate = dates.find((date) => date <= todayKey);
-//   const start = earliestDate
-//     ? new Date(`${earliestDate}T12:00:00`)
-//     : new Date(end);
-//   const keys = [];
-//   $("#budgetChart").dataset.startDate = earliestDate || todayKey;
-//   const labels = [];
-//   const formatter = new Intl.DateTimeFormat("fr-FR", {
-//     day: "2-digit",
-//     month: "short",
-//   });
-
-//   for (const cursor = new Date(start); cursor <= end; cursor.setDate(cursor.getDate() + 1)) {
-//     const key = [
-//       cursor.getFullYear(),
-//       String(cursor.getMonth() + 1).padStart(2, "0"),
-//       String(cursor.getDate()).padStart(2, "0"),
-//     ].join("-");
-//     keys.push(key);
-//     labels.push(formatter.format(cursor));
-//   }
-
-//   return { keys, labels };
-// }
 function buildTimeSeries(entries) {
   const dates = entries
     .map((item) => String(item.date || "").slice(0, 10))
@@ -845,43 +808,6 @@ function buildTimeSeries(entries) {
   return { keys, labels };
 }
 
-// function cumulativeBalances(incomes, expenses, entries) {
-//   const firstDate = document.querySelector("#budgetChart")?.dataset.startDate;
-//   if (!firstDate) return incomes.map(() => 0);
-
-//   const incomeByDate = new Map();
-//   const expenseByDate = new Map();
-
-//   for (const item of entries) {
-//     const date = String(item.date || "").slice(0, 10);
-//     const amount = Number(item.montant) || 0;
-
-//     if (item.kind === "revenus") {
-//       incomeByDate.set(date, (incomeByDate.get(date) || 0) + amount);
-//     } else if (["produits", "items"].includes(item.kind)) {
-//       const soldAmount = amount * Math.max(0, Number(item.quantiteVendu) || 0);
-//       incomeByDate.set(date, (incomeByDate.get(date) || 0) + soldAmount);
-//     } else if (["achats", "depenses"].includes(item.kind)) {
-//       expenseByDate.set(date, (expenseByDate.get(date) || 0) + amount);
-//     }
-//   }
-
-//   const balance = [...incomeByDate.entries()]
-//     .filter(([date]) => date < firstDate)
-//     .reduce((total, [, amount]) => total + amount, 0)
-//     - [...expenseByDate.entries()]
-//       .filter(([date]) => date < firstDate)
-//       .reduce((total, [, amount]) => total + amount, 0);
-
-//   return incomes.map((_, index) => {
-//     const date = buildChartDate(index);
-//     return date;
-//   }).reduce((balances, date) => {
-//     const previous = balances.length ? balances[balances.length - 1] : balance;
-//     balances.push(previous + (incomeByDate.get(date) || 0) - (expenseByDate.get(date) || 0));
-//     return balances;
-//   }, []);
-// }
 function cumulativeBalances(incomes, expenses) {
   let total = 0;
 
@@ -891,18 +817,6 @@ function cumulativeBalances(incomes, expenses) {
   });
 }
 
-// function buildChartDate(index) {
-//   const startKey = document.querySelector("#budgetChart")?.dataset.startDate;
-//   if (!startKey) return "";
-
-//   const date = new Date(`${startKey}T12:00:00`);
-//   date.setDate(date.getDate() + index);
-//   return [
-//     date.getFullYear(),
-//     String(date.getMonth() + 1).padStart(2, "0"),
-//     String(date.getDate()).padStart(2, "0"),
-//   ].join("-");
-// }
 function makeDatasets({
   profits,
   expenses,
@@ -921,8 +835,6 @@ function makeDatasets({
       backgroundColor: "rgba(49,185,129,.11)",
       pointBackgroundColor: "#31b981",
       fill: true,
-      // tension: 0.38,
-      // tension: 0,
       cubicInterpolationMode: "monotone",
       borderWidth: 2.5,
       pointRadius: 3,
@@ -935,7 +847,6 @@ function makeDatasets({
       backgroundColor: "rgba(241,122,103,.08)",
       pointBackgroundColor: "#f17a67",
       fill: true,
-      // tension: 0.38,
       cubicInterpolationMode: "monotone",
       borderWidth: 2.5,
       pointRadius: 3,
@@ -947,7 +858,6 @@ function makeDatasets({
       borderColor: "#6861eb",
       backgroundColor: "transparent",
       pointBackgroundColor: "#6861eb",
-      // tension: 0.38,
       cubicInterpolationMode: "monotone",
       borderWidth: 2.5,
       pointRadius: 3,
@@ -960,7 +870,6 @@ function makeDatasets({
       backgroundColor: "rgba(238,174,72,.12)",
       pointBackgroundColor: "#eeae48",
       fill: true,
-      // tension: 0.38,
       cubicInterpolationMode: "monotone",
       borderWidth: 2.5,
       pointRadius: 3,
