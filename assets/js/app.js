@@ -85,6 +85,14 @@ function showToast(message) {
   showToast.timer = setTimeout(() => toast.classList.remove("show"), 2600);
 }
 
+function closeDialog(dialog) {
+  if (!dialog) return;
+  if (dialog.open) dialog.close();
+  // Electron can retain the modal focus trap after a dialog is dismissed.
+  document.activeElement?.blur?.();
+  document.body.focus?.();
+}
+
 function preferences() {
   try {
     return JSON.parse(localStorage.getItem(localKey)) ?? {};
@@ -388,7 +396,7 @@ function renderStats(model, totals) {
       ["Total Dépenses", -totals.expense],
       ["Total Revenus", soldValue],
       ["Valeur Totale des Articles", totals.estimate],
-      ["Valeur Totale des Articles (Invendus)", itemsExpenseValue],
+      ["Valeur Totale des Articles Invendus", itemsExpenseValue],
       ["Valeur Totale des Articles (Dépenses Soustraites)", netAssets],
     ];
     const cards = rows.map(([label, value], index) => ({
@@ -529,11 +537,18 @@ function renderLists(model, totals) {
               : item.kind === "produits"
                 ? "items"
                 : item.kind;
+          const actionKind = model.marketplace
+            ? (isProduct ? "items" : "depenses")
+            : item.kind === "achats" || item.kind === "depenses"
+              ? "expenses"
+              : item.kind === "revenus"
+                ? "profits"
+              : item.kind;
           const productSold =
             isProduct && (item.etat === true || Number(item.quantite) === 0);
           const expense = ["depenses", "achats"].includes(item.kind);
           const status = isProduct ? productStatus(item) : "";
-          return `<div class="item-row"><span class="item-thumb ${isProduct ? (productSold ? "product-sold" : "product-thumb") : expense ? "expense-thumb" : kind}"><i class="fa-solid ${expense ? "fa-arrow-trend-down" : isProduct ? (productSold ? "fa-circle-check" : "fa-cube") : kindIcon(kind)}"></i></span><span class="item-info"><strong>${escapeHtml(item.nom || "Sans nom")}</strong><small>${escapeHtml(item.modelName ? `${item.modelName} · ` : "")}${formatDate(item.date)}${isProduct ? ` · ${status} · Qté ${productSold ? 0 : productQuantity(item)}` : ` · ${kindLabel(item.kind)}`}</small></span><span class="item-value">${money(isProduct ? (Number(item.montant) || 0) * (productSold ? Math.max(1, Number(item.quantiteVendu ?? item.quantiteInitiale ?? 1) || 1) : productQuantity(item)) : -Math.abs(Number(item.montant) || 0))}</span>${item.file ? "" : `<button class="icon-button item-edit" data-kind="${isProduct ? "items" : kind}" data-date="${escapeHtml(item.date || "")}" data-name="${escapeHtml(item.nom || "")}" data-amount="${Number(item.montant) || 0}" title="Modifier"><i class="fa-regular fa-pen-to-square"></i></button><button class="icon-button item-delete" data-kind="${isProduct ? "items" : kind}" data-date="${escapeHtml(item.date || "")}" data-name="${escapeHtml(item.nom || "")}" data-amount="${Number(item.montant) || 0}" title="Modifier"><i class="fa-regular fa-trash-can"></i></button>`}</div>`;
+          return `<div class="item-row"><span class="item-thumb ${isProduct ? (productSold ? "product-sold" : "product-thumb") : expense ? "expense-thumb" : kind}"><i class="fa-solid ${expense ? "fa-arrow-trend-down" : isProduct ? (productSold ? "fa-circle-check" : "fa-cube") : kindIcon(kind)}"></i></span><span class="item-info"><strong>${escapeHtml(item.nom || "Sans nom")}</strong><small>${escapeHtml(item.modelName ? `${item.modelName} · ` : "")}${formatDate(item.date)}${isProduct ? ` · ${status} · Qté ${productSold ? 0 : productQuantity(item)}` : ` · ${kindLabel(item.kind)}`}</small></span><span class="item-value">${money(isProduct ? (Number(item.montant) || 0) * (productSold ? Math.max(1, Number(item.quantiteVendu ?? item.quantiteInitiale ?? 1) || 1) : productQuantity(item)) : item.kind === "revenus" ? Math.abs(Number(item.montant) || 0) : -Math.abs(Number(item.montant) || 0))}</span>${item.file ? "" : `<button class="icon-button item-edit" data-kind="${actionKind}" data-date="${escapeHtml(item.date || "")}" data-name="${escapeHtml(item.nom || "")}" data-amount="${Number(item.montant) || 0}" title="Modifier"><i class="fa-regular fa-pen-to-square"></i></button><button class="icon-button item-delete" data-kind="${actionKind}" data-date="${escapeHtml(item.date || "")}" data-name="${escapeHtml(item.nom || "")}" data-amount="${Number(item.montant) || 0}" title="Supprimer"><i class="fa-regular fa-trash-can"></i></button>`}</div>`;
         })
         .join("")
     : `<div class="empty-state compact"><span class="empty-icon"><i class="fa-solid ${model.marketplace ? "fa-cube" : "fa-chart-line"}"></i></span><strong>${model.marketplace ? "Votre collection commence ici" : "Rien à afficher"}</strong><small>Ajoutez vos produits, achats ou revenus.</small></div>`;
@@ -1088,7 +1103,7 @@ function openMarketSummary() {
     ["Total Dépenses", -totals.expense],
     ["Total Revenus", soldValue],
     ["Valeur Totale des Articles", totals.estimate],
-    ["Valeur Totale des Articles (Invendus)", unsoldValue],
+    ["Valeur Totale des Articles Invendus", unsoldValue],
     [
       "Valeur Totale des Articles (Dépenses Soustraites)",
       unsoldValue - totals.expense,
@@ -1166,7 +1181,7 @@ function render() {
         note: "Tous les espaces réunis",
       },
       {
-        label: "Valeur des produits (Invendus)",
+        label: "Valeur des produits Invendus",
         value: money(totals.unsoldValue),
         icon: "fa-gem",
         tone: "blue",
@@ -1279,7 +1294,7 @@ async function updateModel(event) {
     state.models = state.models
       .map((entry) => entry.file === model.file ? updated : entry)
       .sort((a, b) => a.name.localeCompare(b.name, "fr"));
-    $("#editModelDialog").close();
+    closeDialog($("#editModelDialog"));
     render();
   } catch {}
 }
@@ -1310,7 +1325,11 @@ function openItemDialog(kind = null, item = null, index = null) {
   $("#itemDialogTitle").textContent = item
     ? kind === "products"
       ? "Modifier un produit"
-      : "Modifier une dépense"
+      : kind === "profits"
+        ? "Modifier un revenu"
+        : model.marketplace
+          ? "Modifier une dépense"
+          : "Modifier un achat"
     : model.marketplace
       ? "Ajouter un produit ou une dépense"
       : "Ajouter un achat / revenu";
@@ -1380,7 +1399,7 @@ async function addModel(event) {
     state.models.sort((a, b) => a.name.localeCompare(b.name, "fr"));
     state.activeFile = file;
     savePreference("activeFile", file);
-    $("#modelDialog").close();
+    closeDialog($("#modelDialog"));
     setView("dashboard");
     setView("model");
     render();
@@ -1430,11 +1449,12 @@ async function saveItem(event) {
     !item.date
   )
     return;
-  if (state.editingIndex !== null) list[state.editingIndex] = item;
+  if (state.editingIndex !== null) list[state.editingIndex] = { ...list[state.editingIndex], ...item };
   else list.push(item);
   try {
     await persistModel(model);
-    $("#itemDialog").close();
+    closeDialog($("#itemDialog"));
+    state.editingIndex = null;
     setView("model");
     render();
   } catch {}
@@ -1442,12 +1462,15 @@ async function saveItem(event) {
 
 async function editItem(data) {
   const model = activeModel();
+  if (!model) return;
   const kind =
     model.marketplace && data.kind !== "depenses"
       ? "products"
       : model.marketplace
         ? "expenses"
-        : data.kind;
+        : data.kind === "depenses" || data.kind === "achats"
+          ? "expenses"
+          : data.kind;
   const list = model.data[kind].items;
   const index = list.findIndex(
     (item) =>
@@ -1466,7 +1489,9 @@ async function removeItem(data) {
       ? "products"
       : model.marketplace
         ? "expenses"
-        : data.kind;
+        : data.kind === "depenses" || data.kind === "achats"
+          ? "expenses"
+          : data.kind;
   const list = model?.data[kind]?.items;
   const index = list?.findIndex(
     (item) =>
@@ -1474,14 +1499,40 @@ async function removeItem(data) {
       String(item.date || "") === data.date &&
       Number(item.montant) === Number(data.amount),
   );
-  if (!list || index < 0 || !window.confirm(`Supprimer « ${data.name} » ?`))
+  if (!list || index < 0) return;
+  const confirmed = await confirmDelete(`« ${data.name} »`);
+  if (!confirmed) {
+    await loadModels();
+    render();
     return;
+  }
   list.splice(index, 1);
   try {
     await persistModel(model, "Entrée supprimée");
+    await loadModels();
     setView("model");
     render();
   } catch {}
+}
+
+function confirmDelete(message) {
+  const dialog = $("#confirmDeleteDialog");
+  $("#confirmDeleteMessage").textContent = message;
+  dialog.showModal();
+  return new Promise((resolve) => {
+    const finish = (confirmed) => {
+      dialog.removeEventListener("close", onClose);
+      if (dialog.open) closeDialog(dialog);
+      resolve(confirmed);
+    };
+    const onClose = () => {
+      dialog.removeEventListener("close", onClose);
+      resolve(dialog.returnValue === "confirm");
+    };
+    dialog.addEventListener("close", onClose, { once: true });
+    $("#cancelDeleteButton").onclick = () => finish(false);
+    $("#cancelDeleteClose").onclick = () => finish(false);
+  });
 }
 
 
@@ -1526,7 +1577,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   $("#editModelForm").addEventListener("submit", updateModel);
   $("#itemForm").addEventListener("submit", saveItem);
   $$(".close-dialog").forEach((button) =>
-    button.addEventListener("click", () => button.closest("dialog").close()),
+    button.addEventListener("click", () => {
+      const dialog = button.closest("dialog");
+      closeDialog(dialog);
+      if (dialog?.id === "itemDialog") state.editingIndex = null;
+    }),
   );
   $("#itemType").addEventListener("change", () => {
     const model = activeModel();
@@ -1546,6 +1601,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   $("#showAllItems").addEventListener("click", openAllEntries);
   $("#marketSummaryButton").addEventListener("click", openMarketSummary);
   $("#deleteModelButton").addEventListener("click", deleteActiveModel);
+  $("#confirmDeleteDialog").addEventListener("cancel", (event) => {
+    event.preventDefault();
+    closeDialog($("#confirmDeleteDialog"));
+  });
   $("#editModelButton").addEventListener("click", openEditModelDialog);
   $("#filterToggle").addEventListener("click", () => {
     const panel = $("#filterPanel");

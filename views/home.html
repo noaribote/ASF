@@ -424,6 +424,24 @@
         </div>
       </form>
     </dialog>
+    <dialog id="confirmDeleteDialog" class="modal confirm-delete-modal">
+      <form method="dialog" class="modal-form">
+        <div class="modal-heading">
+          <div>
+            <span class="eyebrow">CONFIRMATION</span>
+            <h2>Supprimer définitivement ?</h2>
+          </div>
+          <button type="button" class="icon-button" id="cancelDeleteClose" aria-label="Fermer">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+        <p id="confirmDeleteMessage" class="confirm-delete-message"></p>
+        <div class="modal-actions">
+          <button type="button" class="button button-quiet" id="cancelDeleteButton">Annuler</button>
+          <button class="button button-primary" value="confirm">Supprimer</button>
+        </div>
+      </form>
+    </dialog>
     <script src="../assets/js/app.js"></script>
   </body>
 </html>
