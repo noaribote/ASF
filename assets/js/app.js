@@ -389,7 +389,7 @@ function renderStats(model, totals) {
           sum + (Number(item.montant) || 0) * productQuantity(item),
         0,
       );
-    const netAssets = itemsExpenseValue - totals.expense;
+    const netAssets = totals.estimate - totals.expense;
     const rows = [
       ["Solde", soldValue - totals.expense],
       ["Total Dépenses", -totals.expense],
@@ -519,6 +519,8 @@ function renderLists(model, totals) {
         })),
       ].sort((a, b) => String(b.date ?? "").localeCompare(String(a.date ?? "")))
     : totals.all;
+  const showAllTransactions = $("#showAllTransactions");
+  showAllTransactions.hidden = model.marketplace;
   $("#itemsTitle").textContent = model.marketplace
     ? "Produits et dépenses"
     : "Achats et revenus";
@@ -837,7 +839,7 @@ function makeDatasets({
       fill: true,
       cubicInterpolationMode: "monotone",
       borderWidth: 2.5,
-      pointRadius: 3,
+      pointRadius: 0,
       hidden: !hasProfits,
     },
     {
@@ -849,7 +851,7 @@ function makeDatasets({
       fill: true,
       cubicInterpolationMode: "monotone",
       borderWidth: 2.5,
-      pointRadius: 3,
+      pointRadius: 0,
       hidden: !hasExpenses,
     },
     {
@@ -860,7 +862,7 @@ function makeDatasets({
       pointBackgroundColor: "#6861eb",
       cubicInterpolationMode: "monotone",
       borderWidth: 2.5,
-      pointRadius: 3,
+      pointRadius: 0,
       hidden: false,
     },
     {
@@ -872,7 +874,7 @@ function makeDatasets({
       fill: true,
       cubicInterpolationMode: "monotone",
       borderWidth: 2.5,
-      pointRadius: 3,
+      pointRadius: 0,
       hidden: !marketplace || !hasProducts,
     },
   ];
@@ -963,6 +965,26 @@ function openAllEntries() {
     : state.view === "general"
       ? all
       : all.filter((item) => item.file === state.activeFile);
+  const editableItems = visible.map((item) => {
+    const model = state.models.find((entry) => entry.file === item.file);
+    const kind = item.kind === "produits"
+      ? "products"
+      : ["achats", "depenses"].includes(item.kind)
+        ? "expenses"
+        : item.kind === "revenus"
+          ? "profits"
+          : null;
+    return {
+      ...item,
+      editKind: kind,
+      itemIndex: kind && model
+        ? model.data[kind].items.findIndex((candidate) => candidate === item || (
+            candidate.nom === item.nom && candidate.date === item.date &&
+            Number(candidate.montant) === Number(item.montant)
+          ))
+        : -1,
+    };
+  });
   const model = activeModel();
   const heading =
     state.view === "general"
@@ -972,13 +994,20 @@ function openAllEntries() {
         : "Historique complet";
   $("#allEntriesTitle").textContent = heading;
   const list = $("#allEntriesList");
-  list.innerHTML = visible.length
-    ? visible
-        .map((item) => {
+  list.innerHTML = editableItems.length
+    ? editableItems
+        .map((item, index) => {
           const product = item.kind === "produits";
           const expense = ["achats", "depenses"].includes(item.kind);
           const sold = item.etat === true || Number(item.quantite) === 0;
           const status = product ? productStatus(item) : "";
+          const editKind = product
+            ? "products"
+            : expense
+              ? "expenses"
+              : item.kind === "revenus"
+                ? "profits"
+                : null;
           const amount = product
             ? (Number(item.montant) || 0) *
               (sold
@@ -989,11 +1018,29 @@ function openAllEntries() {
                   )
                 : productQuantity(item))
             : Number(item.montant) || 0;
-          return `<div class="all-entry"><span class="history-icon ${product ? (sold ? "sold" : "items") : expense ? "depenses" : item.kind}"><i class="fa-solid ${product ? (sold ? "fa-circle-check" : "fa-cube") : expense ? "fa-arrow-trend-down" : kindIcon(item.kind)}"></i></span><span class="history-name"><strong>${escapeHtml(item.nom || "Sans nom")}</strong><small>${escapeHtml(item.modelName)} · ${kindLabel(item.kind)} · ${formatDate(item.date)}${product ? ` · ${status} · Qté ${sold ? 0 : productQuantity(item)}` : ""}</small></span><strong class="history-amount ${expense ? "depenses" : product && sold ? "sold" : item.kind}">${expense ? "−" : item.kind === "revenus" || (product && sold) ? "+" : ""}${money(amount)}</strong></div>`;
+          return `<button type="button" class="all-entry all-entry-button" data-index="${index}" ${editKind ? "" : "disabled"}><span class="history-icon ${product ? (sold ? "sold" : "items") : expense ? "depenses" : item.kind}"><i class="fa-solid ${product ? (sold ? "fa-circle-check" : "fa-cube") : expense ? "fa-arrow-trend-down" : kindIcon(item.kind)}"></i></span><span class="history-name"><strong>${escapeHtml(item.nom || "Sans nom")}</strong><small>${escapeHtml(item.modelName)} · ${kindLabel(item.kind)} · ${formatDate(item.date)}${product ? ` · ${status} · Qté ${sold ? 0 : productQuantity(item)}` : ""}</small></span><strong class="history-amount ${expense ? "depenses" : product && sold ? "sold" : item.kind}">${expense ? "−" : item.kind === "revenus" || (product && sold) ? "+" : ""}${money(amount)}</strong><i class="fa-regular fa-pen-to-square" aria-hidden="true"></i></button>`;
         })
         .join("")
-    : '<div class="empty-state compact"><strong>Aucune donnée enregistrée</strong><small>Les données de vos fichiers JSON apparaîtront ici.</small></div>';
-  $("#allEntriesDialog").showModal();
+    : '<div class="empty-state compact"><strong>Aucune donnée enregistrée</strong><small>Les données de vos espaces apparaîtront ici.</small></div>';
+  $$(".all-entry-button", list).forEach((button) =>
+    button.addEventListener("click", () => {
+      const item = editableItems[Number(button.dataset.index)];
+      if (item.file && item.file !== state.activeFile) {
+        state.activeFile = item.file;
+        savePreference("activeFile", item.file);
+        setView("model");
+      }
+      if (!item.editKind || item.itemIndex < 0) return;
+      closeDialog($("#allEntriesDialog"));
+      openItemDialog(item.editKind, item, item.itemIndex);
+    }),
+  );
+  const dialog = $("#allEntriesDialog");
+  if (!dialog.open) dialog.showModal();
+}
+
+function openAllTransactions() {
+  openAllEntries();
 }
 
 function openMarketSummary() {
@@ -1015,7 +1062,7 @@ function openMarketSummary() {
     ["Valeur Totale des Articles Invendus", unsoldValue],
     [
       "Valeur Totale des Articles (Dépenses Soustraites)",
-      unsoldValue - totals.expense,
+      totals.estimate - totals.expense,
     ],
   ];
   $("#marketSummaryRows").innerHTML = rows
@@ -1110,12 +1157,13 @@ function render() {
         ? "Votre solde global est positif"
         : "Votre solde global est négatif";
     $("#insightText").textContent = totals.all.length
-      ? `${totals.all.length} opérations et produits, provenant directement de vos fichiers JSON.`
+      ? `${totals.all.length} opérations et produits, provenant directement de vos espaces.`
       : "Ajoutez des produits, achats et revenus dans vos espaces pour les voir apparaître ici.";
 
     renderLists({ name: "Tous les espaces", marketplace: false }, totals);
     makeGeneralChart();
     $("#showAllItems").textContent = "Voir toutes les opérations";
+    $("#showAllTransactions").textContent = "Voir toutes les opérations";
     return;
   }
 
@@ -1150,6 +1198,7 @@ function render() {
 
   renderStats(model, totals);
   renderLists(model, totals);
+  $("#showAllTransactions").textContent = "Voir toutes les opérations";
   makeChart(model);
 }
 function setView(view) {
@@ -1424,8 +1473,9 @@ async function removeItem(data) {
   } catch {}
 }
 
-function confirmDelete(message) {
+function confirmDelete(message, title = "Supprimer définitivement ?") {
   const dialog = $("#confirmDeleteDialog");
+  $("#confirmDeleteTitle").textContent = title;
   $("#confirmDeleteMessage").textContent = message;
   dialog.showModal();
   return new Promise((resolve) => {
@@ -1447,7 +1497,12 @@ function confirmDelete(message) {
 
 async function deleteActiveModel() {
   const model = activeModel();
-  if (!model || !window.confirm(`Supprimer « ${model.name} » ? Une copie sera conservée dans vos archives.`)) return;
+  if (!model) return;
+  const confirmed = await confirmDelete(
+    `Supprimer « ${model.name} » et toutes ses données. Une copie sera conservée dans vos archives.`,
+    "Supprimer cet espace ?",
+  );
+  if (!confirmed) return;
   const api = getApi();
   if (!api?.deleteAndArchiveModel) {
     showToast("La suppression est disponible dans l’application Electron.");
@@ -1508,6 +1563,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   $("#addItemHistory").addEventListener("click", () => openItemDialog());
   $("#addItemInline").addEventListener("click", () => openItemDialog());
   $("#showAllItems").addEventListener("click", openAllEntries);
+  document.addEventListener("click", (event) => {
+    if (event.target.closest("#showAllTransactions")) openAllTransactions();
+  });
   $("#marketSummaryButton").addEventListener("click", openMarketSummary);
   $("#deleteModelButton").addEventListener("click", deleteActiveModel);
   $("#confirmDeleteDialog").addEventListener("cancel", (event) => {

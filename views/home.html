@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="fr">
+<html lang="fr-FR">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -175,6 +175,10 @@
               </button>
             </div>
             <div id="itemsList" class="items-list"></div>
+            <button class="text-button" id="showAllTransactions" hidden>
+              Voir tous les achats et revenus
+              <i class="fa-solid fa-arrow-right"></i>
+            </button>
           </section>
           <section class="card insight-card">
             <div class="insight-icon">
@@ -429,7 +433,7 @@
         <div class="modal-heading">
           <div>
             <span class="eyebrow">CONFIRMATION</span>
-            <h2>Supprimer définitivement ?</h2>
+            <h2 id="confirmDeleteTitle">Confirmer la suppression</h2>
           </div>
           <button type="button" class="icon-button" id="cancelDeleteClose" aria-label="Fermer">
             <i class="fa-solid fa-xmark"></i>
