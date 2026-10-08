@@ -994,8 +994,26 @@ function openAllEntries() {
         : "Historique complet";
   $("#allEntriesTitle").textContent = heading;
   const list = $("#allEntriesList");
-  list.innerHTML = editableItems.length
-    ? editableItems
+  const searchWrap = $("#allEntriesSearchWrap");
+  const searchInput = $("#allEntriesSearch");
+  const searchable = model?.marketplace && state.view !== "general";
+  searchWrap.hidden = !searchable;
+  searchInput.value = "";
+  const renderEntries = (query = "") => {
+    const normalizedQuery = query.trim().toLocaleLowerCase("fr-FR");
+    const filteredItems = editableItems.filter((item) => {
+      if (!normalizedQuery) return true;
+      const nameMatches = String(item.nom || "")
+        .toLocaleLowerCase("fr-FR")
+        .includes(normalizedQuery);
+      const priceMatches = searchable && Number(item.montant)
+        .toLocaleString("fr-FR", { useGrouping: false })
+        .toLocaleLowerCase("fr-FR")
+        .includes(normalizedQuery.replace(/\s|€/g, ""));
+      return nameMatches || priceMatches;
+    });
+    list.innerHTML = filteredItems.length
+    ? filteredItems
         .map((item, index) => {
           const product = item.kind === "produits";
           const expense = ["achats", "depenses"].includes(item.kind);
@@ -1021,10 +1039,10 @@ function openAllEntries() {
           return `<button type="button" class="all-entry all-entry-button" data-index="${index}" ${editKind ? "" : "disabled"}><span class="history-icon ${product ? (sold ? "sold" : "items") : expense ? "depenses" : item.kind}"><i class="fa-solid ${product ? (sold ? "fa-circle-check" : "fa-cube") : expense ? "fa-arrow-trend-down" : kindIcon(item.kind)}"></i></span><span class="history-name"><strong>${escapeHtml(item.nom || "Sans nom")}</strong><small>${escapeHtml(item.modelName)} · ${kindLabel(item.kind)} · ${formatDate(item.date)}${product ? ` · ${status} · Qté ${sold ? 0 : productQuantity(item)}` : ""}</small></span><strong class="history-amount ${expense ? "depenses" : product && sold ? "sold" : item.kind}">${expense ? "−" : item.kind === "revenus" || (product && sold) ? "+" : ""}${money(amount)}</strong><i class="fa-regular fa-pen-to-square" aria-hidden="true"></i></button>`;
         })
         .join("")
-    : '<div class="empty-state compact"><strong>Aucune donnée enregistrée</strong><small>Les données de vos espaces apparaîtront ici.</small></div>';
+    : `<div class="empty-state compact"><strong>${normalizedQuery ? "Aucun résultat" : "Aucune donnée enregistrée"}</strong><small>${normalizedQuery ? "Essayez un autre nom ou prix." : "Les données de vos espaces apparaîtront ici."}</small></div>`;
   $$(".all-entry-button", list).forEach((button) =>
     button.addEventListener("click", () => {
-      const item = editableItems[Number(button.dataset.index)];
+      const item = filteredItems[Number(button.dataset.index)];
       if (item.file && item.file !== state.activeFile) {
         state.activeFile = item.file;
         savePreference("activeFile", item.file);
@@ -1035,6 +1053,9 @@ function openAllEntries() {
       openItemDialog(item.editKind, item, item.itemIndex);
     }),
   );
+  };
+  renderEntries();
+  searchInput.oninput = () => renderEntries(searchInput.value);
   const dialog = $("#allEntriesDialog");
   if (!dialog.open) dialog.showModal();
 }
